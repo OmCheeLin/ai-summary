@@ -1,0 +1,9 @@
+streamlit>=1.45.1
+tornado==6.4.1
+alibabacloud-oss-v2
+loguru
+fastapi
+uvicorn
+python-multipart
+pyyaml
+openai

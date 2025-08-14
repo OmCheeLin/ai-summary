@@ -1,0 +1,7 @@
+oss:
+  access_key_id: "LTAI5tS92gY8yFWMKprJBtQ2"
+  access_key_secret: "qU9Zej2e1XmSb7tdbhfBNhd48XENkp"
+  region: "cn-beijing"
+
+llm:
+  api_key: "sk-f82e5e0aae6543fd91fb2186bf3299a9"

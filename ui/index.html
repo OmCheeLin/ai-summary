@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoSmart - AI视频智能摘要分析</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!--    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">-->
+    <link href="/ui/static/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#36CFC9',
+                        accent: '#FF7D00',
+                        dark: '#1D2129',
+                        light: '#F2F3F5'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .transition-height {
+                transition: max-height 0.3s ease-in-out;
+            }
+
+            .gradient-overlay {
+                background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%);
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+<!-- 导航栏 -->
+<header class="bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <i class="fa fa-play-circle text-primary text-3xl"></i>
+            <h1 class="text-xl md:text-2xl font-bold text-primary">Video<span class="text-dark">Smart</span></h1>
+        </div>
+
+        <nav class="hidden md:flex items-center space-x-8">
+            <a href="#" class="font-medium text-primary border-b-2 border-primary pb-1">首页</a>
+            <a href="#" class="font-medium text-gray-600 hover:text-primary transition-colors">功能</a>
+            <a href="#" class="font-medium text-gray-600 hover:text-primary transition-colors">使用教程</a>
+            <a href="#" class="font-medium text-gray-600 hover:text-primary transition-colors">关于我们</a>
+        </nav>
+
+        <div class="flex items-center space-x-4">
+            <button class="hidden md:block px-4 py-2 text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors">
+                登录
+            </button>
+            <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg">
+                免费试用
+            </button>
+            <button class="md:hidden text-dark text-xl">
+                <i class="fa fa-bars"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- 主内容区 -->
+<main class="flex-grow container mx-auto px-4 py-8 md:py-16">
+    <!-- 网站介绍 -->
+    <section class="text-center mb-12 md:mb-20">
+        <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4 text-shadow leading-tight">
+            智能视频摘要，<br class="md:hidden">快速提取核心信息
+        </h2>
+        <p class="text-gray-600 text-lg md:text-xl max-w-3xl mx-auto mb-8">
+            通过先进的AI技术，自动分析视频内容，生成精准摘要、提取关键亮点，节省您80%的观看时间
+        </p>
+    </section>
+
+    <!-- 视频输入区域 -->
+    <section
+            class="max-w-4xl mx-auto mb-16 bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all hover:shadow-2xl">
+        <div class="p-6 md:p-8">
+            <h3 class="text-xl md:text-2xl font-semibold mb-6">上传视频或输入URL</h3>
+
+            <!-- 上传区域 -->
+            <div id="upload-area"
+                 class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center mb-6 cursor-pointer hover:border-primary transition-colors group">
+                <input type="file" id="video-upload" accept="video/*" class="hidden">
+                <i class="fa fa-cloud-upload text-5xl text-gray-400 group-hover:text-primary transition-colors mb-4"></i>
+                <p class="text-gray-600 mb-2">拖放视频文件到此处，或<span
+                        class="text-primary font-medium">点击上传</span></p>
+                <p class="text-gray-400 text-sm">支持 MP4, MOV, AVI, WMV 等格式，最大支持2GB</p>
+            </div>
+
+            <!-- URL输入区域 -->
+            <div id="video-url-area" class="mb-6">
+                <label for="video-url" class="block text-gray-700 mb-2 font-medium">或输入视频URL</label>
+                <div class="flex">
+                    <input type="url" id="video-url" placeholder="https://example.com/video.mp4"
+                           class="flex-grow px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                    <button id="paste-url"
+                            class="bg-gray-100 px-4 border-t border-b border-gray-300 hover:bg-gray-200 transition-colors">
+                        <i class="fa fa-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 上传成功后的视频播放器 -->
+            <div id="video-preview" class="mb-6 hidden">
+                <video id="uploaded-video" controls class="w-full rounded-xl shadow">
+                    <source src="" type="video/mp4">
+                    您的浏览器不支持 HTML5 视频播放。
+                </video>
+            </div>
+
+            <!-- 分析按钮 -->
+            <button id="analyze-btn"
+                    class="w-full py-4 bg-primary text-white rounded-xl text-lg font-medium shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all flex items-center justify-center">
+                <i class="fa fa-magic mr-2"></i> 开始智能分析
+            </button>
+        </div>
+    </section>
+
+    <!-- 加载动画 (默认隐藏) -->
+    <section id="loading-section" class="hidden max-w-4xl mx-auto mb-16 text-center">
+        <div class="bg-white rounded-2xl shadow-xl p-10">
+            <div class="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-primary border-solid mb-6"></div>
+            <h3 class="text-xl font-semibold mb-2">智能分析中...</h3>
+            <p class="text-gray-600">我们正在运用先进的AI技术分析您的视频内容，请稍候</p>
+
+            <!-- 进度条 -->
+            <div class="mt-8 bg-gray-200 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-primary h-2.5 rounded-full w-0 transition-all duration-500"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 分析结果区域 (默认隐藏) -->
+    <section id="results-section" class="hidden max-w-5xl mx-auto">
+
+    </section>
+</main>
+
+<!-- 页脚 -->
+<footer class="bg-dark text-white py-12">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <div class="flex items-center space-x-2 mb-4">
+                    <i class="fa fa-play-circle text-primary text-2xl"></i>
+                    <h3 class="text-xl font-bold">Video<span class="text-primary">Smart</span></h3>
+                </div>
+                <p class="text-gray-400 mb-4">
+                    利用先进的人工智能技术，为您提供精准、高效的视频内容分析和摘要服务。
+                </p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors"><i
+                            class="fa fa-facebook"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors"><i class="fa fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors"><i
+                            class="fa fa-linkedin"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-primary transition-colors"><i
+                            class="fa fa-youtube-play"></i></a>
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-semibold mb-4">产品</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">视频摘要</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">字幕生成</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">内容分析</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">API接口</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">定价方案</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-semibold mb-4">资源</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">帮助中心</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">使用教程</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">案例研究</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">博客文章</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">常见问题</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-lg font-semibold mb-4">公司</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">关于我们</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">联系我们</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">隐私政策</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">服务条款</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">加入我们</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-800 mt-10 pt-6 text-center text-gray-500 text-sm">
+            <p>&copy; 2025 VideoSmart. 保留所有权利。</p>
+        </div>
+    </div>
+</footer>
+
+<!-- JavaScript -->
+<script>
+    // 页面加载完成后执行
+    document.addEventListener('DOMContentLoaded', function () {
+        // 获取DOM元素
+        const uploadArea = document.getElementById('upload-area');
+        const videoUrlArea = document.getElementById('video-url-area');
+        const videoUpload = document.getElementById('video-upload');
+        const videoUrl = document.getElementById('video-url');
+        const pasteUrl = document.getElementById('paste-url');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const loadingSection = document.getElementById('loading-section');
+        const resultsSection = document.getElementById('results-section');
+        const progressBar = document.getElementById('progress-bar');
+        // const toggleSubtitlesBtns = document.querySelectorAll('.toggle-subtitles');
+        let videoName;
+
+        // 上传区域点击触发文件选择
+        uploadArea.addEventListener('click', function () {
+            videoUpload.click();
+        });
+
+        // 阻止上传区域的拖放默认行为
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // 拖放样式变化
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            uploadArea.classList.add('border-primary', 'bg-primary/5');
+        }
+
+        function unhighlight() {
+            uploadArea.classList.remove('border-primary', 'bg-primary/5');
+        }
+
+        // 处理文件拖放
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length) {
+                handleFiles(files);
+            }
+        }
+
+        // 处理文件选择
+        videoUpload.addEventListener('change', function () {
+            if (this.files.length) {
+                handleFiles(this.files);
+            }
+        });
+
+        // 处理文件上传
+        async function handleFiles(files) {
+            const file = files[0];
+
+            if (!file.type.startsWith('video/')) {
+                alert('请上传视频文件');
+                return;
+            }
+
+            // uploadArea.classList.add('hidden');
+            // videoUrlArea.classList.add('hidden');
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            analyzeBtn.innerHTML = `<i class="fa fa-spinner fa-spin mr-2"></i> 上传中...`;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8765/upload-video/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('上传失败');
+                }
+
+                const result = await response.json();
+
+                analyzeBtn.disabled = false;
+                analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                uploadArea.classList.add('hidden');
+                videoUrlArea.classList.add('hidden');
+                analyzeBtn.innerHTML = `<i class="fa fa-magic mr-2"></i> 开始智能分析`;
+                // 显示视频
+                showUploadedVideo(result.video_url);
+                videoName = result.filename
+            } catch (error) {
+                console.error('上传错误:', error);
+                alert('上传失败，请重试');
+            }
+        }
+
+        // 显示上传后的视频
+        function showUploadedVideo(videoUrl) {
+            const videoPreview = document.getElementById('video-preview');
+            const uploadedVideo = document.getElementById('uploaded-video');
+
+            uploadedVideo.src = videoUrl;
+            videoPreview.classList.remove('hidden');
+            uploadedVideo.load();
+            // uploadedVideo.play(); // 无需自动播放
+        }
+
+        // 粘贴URL按钮
+        pasteUrl.addEventListener('click', function () {
+            navigator.clipboard.readText()
+                .then(text => {
+                    videoUrl.value = text;
+                    // 简单验证URL格式
+                    if (!text.startsWith('http://') && !text.startsWith('https://')) {
+                        alert('剪贴板中的内容似乎不是有效的URL');
+                    }
+                })
+                .catch(err => {
+                    console.error('无法读取剪贴板内容: ', err);
+                    alert('无法访问剪贴板，请手动输入URL');
+                });
+        });
+
+        // 分析按钮点击事件
+        analyzeBtn.addEventListener('click', function () {
+            // 验证输入
+            if (!videoUpload.files.length && !videoUrl.value.trim()) {
+                alert('请上传视频文件或输入视频URL');
+                return;
+            }
+            // 简单验证URL格式
+            if (!videoUpload.files.length && !videoUrl.value.trim().startsWith('http://') && !videoUrl.value.trim().startsWith('https://')) {
+                alert('似乎不是有效的URL');
+                return;
+            }
+
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            analyzeBtn.innerHTML = `<i class="fa fa-spinner fa-spin mr-2"></i> 智能分析中...`;
+
+            // 显示加载界面
+            // uploadArea.parentElement.parentElement.classList.add('hidden');
+            loadingSection.classList.remove('hidden');
+
+            // 进度条
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (progress < 90) {  // 进度最多增长到90%
+                    // 随机增加1~5
+                    const increment = Math.floor(Math.random() * 4);
+                    progress += increment;
+                    if (progress > 90) progress = 90;  // 不超过90%
+                    progressBar.style.width = progress + '%';  // 更新进度条宽度
+                }
+            }, 600);
+            getAnalysisResult(videoName)  // 发送异步请求，返回 Promise
+                .then(() => {
+                    clearInterval(interval);  // 请求成功，停止定时器
+                    progressBar.style.width = '100%';  // 进度条瞬间跳到100%
+                })
+                .catch(() => {
+                    clearInterval(interval);  // 请求失败，停止定时器
+                    progressBar.style.width = '0%';    // 进度条清空
+                });
+        });
+
+        function getAnalysisResult(filename) {
+            const formData = new FormData();
+            formData.append('filename', filename);
+
+            return fetch('/analyse', {method: 'POST', body: formData})
+                .then(res => res.json())
+                .then(data => {
+                    // 用后端返回的 HTML 替换结果区域
+                    resultsSection.innerHTML = data.html;
+                    // 进度条隐藏、结果展示
+                    loadingSection.classList.add('hidden');
+                    resultsSection.classList.remove('hidden');
+                    // 恢复按钮
+                    analyzeBtn.disabled = false;
+                    analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    analyzeBtn.innerHTML = `<i class="fa fa-magic mr-2"></i> 开始智能分析`;
+                    // 滚动到结果区域
+                    resultsSection.scrollIntoView({behavior: 'smooth'});
+                })
+                .catch(err => {
+                    alert('分析失败：' + err.message);
+                    analyzeBtn.disabled = false;
+                    analyzeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    analyzeBtn.innerHTML = `<i class="fa fa-magic mr-2"></i> 开始智能分析`;
+                    loadingSection.classList.add('hidden');
+                });
+        }
+
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function () {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('py-2', 'shadow');
+                header.classList.remove('py-3', 'shadow-sm');
+            } else {
+                header.classList.add('py-3', 'shadow-sm');
+                header.classList.remove('py-2', 'shadow');
+            }
+        });
+    });
+
+    document.getElementById('results-section').addEventListener('click', function (e) {
+        const btn = e.target.closest('.toggle-subtitles');
+        if (!btn) return;
+
+        const targetId = btn.getAttribute('data-target');
+        const subtitlesElement = document.getElementById(targetId);
+        const icon = btn.querySelector('.fa-chevron-down');
+
+        if (subtitlesElement.style.maxHeight) {
+            // 收起字幕
+            subtitlesElement.style.maxHeight = null;
+            icon.style.transform = 'rotate(0deg)';
+            btn.innerHTML = '<i class="fa fa-comment-o mr-2"></i> 查看字幕 <i class="fa fa-chevron-down ml-2 transition-transform duration-300"></i>';
+        } else {
+            // 展开字幕
+            subtitlesElement.style.maxHeight = subtitlesElement.scrollHeight + 'px';
+            icon.style.transform = 'rotate(180deg)';
+            btn.innerHTML = '<i class="fa fa-comment-o mr-2"></i> 收起字幕 <i class="fa fa-chevron-down ml-2 transition-transform duration-300" style="transform: rotate(180deg);"></i>';
+        }
+    });
+</script>
+</body>
+</html>

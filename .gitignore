@@ -1,0 +1,16 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.db
+
+# Virtual environments
+.venv
+.conda
+.idea
+# Virtual environments
+data/
+models/
+uv.lock
