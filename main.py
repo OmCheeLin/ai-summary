@@ -1,17 +1,20 @@
-import json
+import re
 import uuid
+from pathlib import Path
+
 import uvicorn
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 import shutil
 import os
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi import Form
 
 from config.config import get_yaml_config
 from service.workflow import analyse_workflow
-from util.constants import Constants
+from util.common.constants import Constants
+from util.common.docx_util import generate_docx
 
 app = FastAPI()
 Constants.init_filepath(os.getcwd())
@@ -54,11 +57,24 @@ async def upload_video(file: UploadFile = File(...)):
 @app.post("/analyse/")
 async def analyse(filename: str = Form(...)):
     all_result_json = analyse_workflow(filename)
+    uid = f'{uuid.uuid4()}.docx'
+    generate_docx(all_result_json, uid)
+    all_result_json['download_docx_name'] = uid
+
     # 渲染模板成 HTML 字符串
-    # with open("result.json", "r", encoding="utf-8") as f:
-    #     all_result_json = json.load(f)
     html_content = templates.get_template("result_section.html").render(**all_result_json)
     return JSONResponse({"html": html_content})
+
+
+@app.get("/download-docx/{filename}")
+async def download_docx(filename: str):
+    docx_path = str(Path(Constants.TMP_DIR) / filename)
+    # 返回下载链接
+    return FileResponse(
+        path=docx_path,
+        filename=f"{filename}_analysis.docx",
+        media_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 from openai import OpenAI
 from config.config import get_llm_api_key
-from util.json_util import extract_json_from_text
+from util.common.json_util import extract_json_from_text
 from loguru import logger
 
 client = OpenAI(

@@ -1,13 +1,10 @@
-from datetime import timedelta
-
 import requests
 import json
 import time
 from loguru import logger
 
 from config.config import get_llm_api_key
-from util.ffmpeg_util import screenshot
-from util.time_util import ms_to_format_str
+from util.common.time_util import ms_to_format_str
 
 
 # 提交文件转写任务，包含待转写文件url列表
@@ -102,7 +99,7 @@ def download_and_extract_text(result_url):
     return full_text, filtered_sentences
 
 
-def audio_to_text(file_urls: str):
+def audio_to_text(file_urls):
     api_key = get_llm_api_key()
     task_id = submit_task(api_key, file_urls)
     result_url = wait_for_complete(api_key, task_id)
